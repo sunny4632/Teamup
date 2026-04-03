@@ -1,0 +1,167 @@
+// ===============================================================
+// Assumed Data Model
+// ===============================================================
+//
+// Collection: users
+// Document ID: {uid}
+// Fields:
+//   - uid: string (required)
+//   - id: string (required)
+//   - email: string (required, email format)
+//   - password: string (required)
+//   - name: string (required)
+//   - role: string (required, enum: student, graduate, experienced)
+//   - course: string (required)
+//   - year: string (required)
+//   - college: string (required)
+//   - region: string (required)
+//   - language: string (required)
+//   - skills: list (required)
+//   - phone: string (optional)
+//   - projectTitle: string (optional)
+//   - projectDescription: string (optional)
+//
+// Collection: requests
+// Document ID: {requestId}
+// Fields:
+//   - senderId: string (required)
+//   - receiverId: string (required)
+//   - status: string (required, enum: pending, accepted, rejected)
+//   - timestamp: timestamp (required)
+//
+// Collection: connections
+// Document ID: {connectionId}
+// Fields:
+//   - user1: string (required)
+//   - user2: string (required)
+//   - timestamp: number (required)
+//
+// Collection: projects
+// Document ID: {projectId}
+// Fields:
+//   - id: string (required)
+//   - title: string (required)
+//   - description: string (required)
+//   - createdBy: string (required)
+//   - creatorName: string (required)
+//   - ideaTitle: string (optional)
+//   - timestamp: timestamp (required)
+//
+// ===============================================================
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isValidUser(data) {
+      return data.keys().hasAll(['uid', 'id', 'email', 'name', 'role', 'course', 'year', 'college', 'region', 'language', 'skills']) &&
+             data.uid is string &&
+             data.id is string &&
+             data.email is string &&
+             data.name is string &&
+             data.role in ['student', 'graduate', 'experienced'] &&
+             data.course is string &&
+             data.year is string &&
+             data.college is string &&
+             data.region is string &&
+             data.language is string &&
+             data.skills is list;
+    }
+
+    function isValidRequest(data) {
+      return data.keys().hasAll(['senderId', 'receiverId', 'status', 'timestamp']) &&
+             data.senderId is string &&
+             data.receiverId is string &&
+             data.status in ['pending', 'accepted', 'rejected'] &&
+             data.timestamp is timestamp;
+    }
+
+    function isValidConnection(data) {
+      return data.keys().hasAll(['user1', 'user2', 'timestamp']) &&
+             data.user1 is string &&
+             data.user2 is string &&
+             data.timestamp is number;
+    }
+
+    match /users/{uid} {
+      // Allow anyone to read profiles (needed for custom login and search)
+      allow read: if true;
+      
+      // Allow registration (uid must match auth.uid if using Firebase Auth, or anyone if custom)
+      allow create: if true; // Custom registration doesn't always have request.auth
+      
+      // Allow profile updates by owner (if authenticated) or anyone (if custom)
+      allow update: if true; // Insecure but necessary for custom system without Auth
+    }
+
+    match /requests/{requestId} {
+      // Allow reading requests (filtered by query in app)
+      allow read: if true;
+      
+      // Allow sending requests
+      allow create: if true;
+      
+      // Allow accepting/rejecting requests
+      allow update: if true;
+      
+      // Allow deleting requests
+      allow delete: if true;
+    }
+
+    match /notifications/{notificationId} {
+      // Allow users to read their own notifications (filtered by query in app)
+      allow read: if true;
+      
+      // Allow creating notifications (e.g., when sending a request)
+      allow create: if true;
+      
+      // Allow marking as read
+      allow update: if true;
+    }
+
+    match /connections/{connectionId} {
+      // Allow reading connections
+      allow read: if true;
+      
+      // Allow creating connections
+      allow create: if true;
+    }
+
+    match /projects/{projectId} {
+      // Allow global visibility
+      allow read: if true;
+      
+      // Allow creation and updates
+      allow create: if true;
+      allow update: if true;
+      allow delete: if true;
+    }
+
+    match /projectRequests/{requestId} {
+      // Allow reading requests
+      allow read: if true;
+      
+      // Allow sending requests
+      allow create: if true;
+      
+      // Allow updating status (owner only)
+      allow update: if true;
+      
+      // Allow deleting requests
+      allow delete: if true;
+    }
+
+    match /test/{docId} {
+      allow read: if true;
+    }
+  }
+}

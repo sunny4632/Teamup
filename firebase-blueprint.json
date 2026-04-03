@@ -1,0 +1,126 @@
+{
+  "entities": {
+    "User": {
+      "title": "User Profile",
+      "description": "Stores user profile and login information.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "Unique identifier for the user." },
+        "email": { "type": "string", "format": "email", "description": "User's email address." },
+        "password": { "type": "string", "description": "User's password (stored in Firestore as requested)." },
+        "name": { "type": "string", "description": "Full name of the user." },
+        "role": { "type": "string", "enum": ["student", "graduate", "experienced"], "description": "User's professional role." },
+        "course": { "type": "string", "description": "Academic course." },
+        "year": { "type": "string", "description": "Year of study or experience." },
+        "college": { "type": "string", "description": "College or university name." },
+        "region": { "type": "string", "description": "Geographical region." },
+        "language": { "type": "string", "description": "Preferred language." },
+        "skills": { "type": "array", "items": { "type": "string" }, "description": "List of skills." },
+        "projectTitle": { "type": "string", "description": "Optional project title." },
+        "projectDescription": { "type": "string", "description": "Optional project description." },
+        "phone": { "type": "string", "description": "User's phone number (hidden by default)." },
+        "fcmToken": { "type": "string", "description": "Firebase Cloud Messaging token for push notifications." }
+      },
+      "required": ["uid", "email", "password", "name", "role"]
+    },
+    "Notification": {
+      "title": "Notification",
+      "description": "Stores system notifications for users.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "UID of the user who should receive the notification." },
+        "title": { "type": "string", "description": "Notification title." },
+        "body": { "type": "string", "description": "Notification body." },
+        "type": { "type": "string", "enum": ["join", "request", "acceptance"], "description": "Type of notification." },
+        "timestamp": { "type": "string", "format": "date-time", "description": "When the notification was created." },
+        "read": { "type": "boolean", "description": "Whether the notification has been read." }
+      },
+      "required": ["userId", "title", "body", "type", "timestamp"]
+    },
+    "ConnectionRequest": {
+      "title": "Connection Request",
+      "description": "Stores requests for contact information between users.",
+      "type": "object",
+      "properties": {
+        "fromUid": { "type": "string", "description": "UID of the user sending the request." },
+        "toUid": { "type": "string", "description": "UID of the user receiving the request." },
+        "status": { "type": "string", "enum": ["pending", "accepted", "rejected"], "description": "Status of the request." },
+        "timestamp": { "type": "string", "format": "date-time", "description": "When the request was sent." }
+      },
+      "required": ["fromUid", "toUid", "status", "timestamp"]
+    },
+    "Connection": {
+      "title": "Connection",
+      "description": "Stores established connections between users.",
+      "type": "object",
+      "properties": {
+        "user1": { "type": "string", "description": "UID of the first user in the connection." },
+        "user2": { "type": "string", "description": "UID of the second user in the connection." },
+        "timestamp": { "type": "number", "description": "When the connection was established." }
+      },
+      "required": ["user1", "user2", "timestamp"]
+    },
+    "Project": {
+      "title": "Project",
+      "description": "Stores project information created by users.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique identifier for the project." },
+        "title": { "type": "string", "description": "Project title." },
+        "description": { "type": "string", "description": "Project description." },
+        "createdBy": { "type": "string", "description": "UID of the user who created the project." },
+        "creatorName": { "type": "string", "description": "Name of the user who created the project." },
+        "ideaTitle": { "type": "string", "description": "Optional title of the daily idea used." },
+        "timestamp": { "type": "string", "format": "date-time", "description": "When the project was created." },
+        "teamMembers": { "type": "array", "items": { "type": "string" }, "description": "List of user UIDs who have joined the project." },
+        "requiredSkills": { "type": "array", "items": { "type": "string" }, "description": "List of skills required for the project." },
+        "purpose": { "type": "string", "description": "The purpose or goal of the project." },
+        "teamSize": { "type": "number", "description": "Target team size." },
+        "commitmentLevel": { "type": "string", "description": "Expected time commitment (e.g., 5h/week)." }
+      },
+      "required": ["id", "title", "description", "createdBy", "creatorName", "timestamp"]
+    },
+    "ProjectRequest": {
+      "title": "ProjectRequest",
+      "description": "Stores requests from users to join a project.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique identifier for the request." },
+        "projectId": { "type": "string", "description": "ID of the project being requested." },
+        "projectTitle": { "type": "string", "description": "Title of the project being requested." },
+        "projectOwnerId": { "type": "string", "description": "UID of the project owner." },
+        "requestedBy": { "type": "string", "description": "UID of the user making the request." },
+        "requestedByName": { "type": "string", "description": "Name of the user making the request." },
+        "status": { "type": "string", "enum": ["pending", "accepted", "rejected"], "description": "Current status of the request." },
+        "timestamp": { "type": "string", "format": "date-time", "description": "When the request was made." }
+      },
+      "required": ["id", "projectId", "projectTitle", "projectOwnerId", "requestedBy", "requestedByName", "status", "timestamp"]
+    }
+  },
+  "firestore": {
+    "/users/{uid}": {
+      "schema": { "$ref": "User" },
+      "description": "User profile documents."
+    },
+    "/requests/{requestId}": {
+      "schema": { "$ref": "ConnectionRequest" },
+      "description": "Connection request documents."
+    },
+    "/notifications/{notificationId}": {
+      "schema": { "$ref": "Notification" },
+      "description": "User notification documents."
+    },
+    "/connections/{connectionId}": {
+      "schema": { "$ref": "Connection" },
+      "description": "Established connection documents."
+    },
+    "/projects/{projectId}": {
+      "schema": { "$ref": "Project" },
+      "description": "Global project documents."
+    },
+    "/projectRequests/{requestId}": {
+      "schema": { "$ref": "ProjectRequest" },
+      "description": "Project join request documents."
+    }
+  }
+}
